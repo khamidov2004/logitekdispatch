@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LOGITEK DISPATCH - Liquid AI Rate Confirmation Engine</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -111,10 +113,31 @@
 
         /* Hero Header */
         .hero-card {
-            padding: 3rem 2rem;
+            padding: 2.5rem 2rem 2.8rem;
             text-align: center;
             margin-bottom: 2rem;
             animation: heroSlideDown 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .brand-logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .brand-logo-img {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.4), 0 0 15px rgba(168, 85, 247, 0.3);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .brand-logo-img:hover {
+            transform: scale(1.08) rotate(3deg);
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.7), 0 0 25px rgba(168, 85, 247, 0.5);
         }
 
         .hero-card::before {
@@ -486,6 +509,9 @@
     <div class="app-container">
         <!-- Hero Card -->
         <header class="liquid-card hero-card">
+            <div class="brand-logo-container">
+                <img src="logo.png" alt="LOGITEK DISPATCH Logo" class="brand-logo-img">
+            </div>
             <h1 class="brand-title">LOGITEK DISPATCH</h1>
             <div class="brand-subtitle">
                 <span>⚡</span>
