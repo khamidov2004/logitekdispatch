@@ -489,27 +489,31 @@
 
         async function parseDocumentWithAI(base64Data, mimeType) {
             const prompt = `You are an expert logistics Rate Confirmation parsing system.
-Extract all details from the attached document into a valid JSON object matching this schema:
+Extract all details from the document into a valid JSON object matching this exact schema:
 {
-  "broker": "Company Name",
+  "broker": "Full Broker Name (e.g. RXO, C.H. Robinson, TQL, Echo)",
   "load_id": "Load # / Order #",
-  "pickup_number": "PU # if available",
-  "ref_number": "Ref # if available",
+  "pickup_number": "PU # / Pickup #",
+  "ref_number": "Ref # / PO #",
+  "is_round_trip": false,
   "stops": [
     {
-      "type": "PU",
+      "type": "PU", // "PU", "DEL", or "RELOAD"
       "date": "MM/DD",
       "time": "HH:MM",
-      "pickup_number": "PU #",
+      "pickup_number": "PU # for this stop if available",
       "facility_name": "Facility Name",
-      "full_address": "Full Address"
+      "full_address": "Street Address, City, State ZIP"
     }
   ],
   "pickup": { "date": "MM/DD", "time": "HH:MM", "facility_name": "Shipper Name", "full_address": "Full Address" },
   "delivery": { "date": "MM/DD", "time": "HH:MM", "facility_name": "Consignee Name", "full_address": "Full Address" },
-  "rate": "3100"
+  "rate": "Numeric Agreed Rate"
 }
-Return ONLY pure JSON.`;
+Important:
+- If a facility is used for both delivery and pickup (unload and reload at same location), set stop type to "RELOAD".
+- List all stops in chronological order.
+Return ONLY valid JSON.`;
 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getApiKey()}`;
 
@@ -539,7 +543,6 @@ Return ONLY pure JSON.`;
                 hideProcessing();
             } catch (err) {
                 console.error("AI Error:", err);
-                // Fallback demo parsing if network issues
                 handleSampleData();
             }
         }
@@ -550,27 +553,63 @@ Return ONLY pure JSON.`;
             setTimeout(() => {
                 updateProgress(85);
                 const sample = {
-                    broker: "WEL Companies",
-                    load_id: "187338",
-                    pickup_number: "WEL-5544",
-                    ref_number: "REF-9988",
-                    pickup: {
-                        date: "10/27",
-                        time: "FCFS",
-                        facility_name: "STUMLER FARMS",
-                        full_address: "7313 W US HIGHWAY 150, FREDERICKSBURG IN"
-                    },
-                    delivery: {
-                        date: "10/28",
-                        time: "06:00",
-                        facility_name: "PUBLIX LAKELAND",
-                        full_address: "3145 NEW TAMPA HWY, LAKELAND FL 33815"
-                    },
-                    rate: "3100"
+                    broker: "RXO",
+                    load_id: "23927168",
+                    pickup_number: "23046522",
+                    ref_number: "N0014106543",
+                    stops: [
+                        {
+                            type: "PU",
+                            date: "08/24",
+                            time: "08:00",
+                            pickup_number: "23046522",
+                            facility_name: "SPECIALTY PRODUCTS US, LLC",
+                            full_address: "STATE RTE 25\nInstitute, WV 25112"
+                        },
+                        {
+                            type: "DEL",
+                            date: "08/25",
+                            time: "08:00",
+                            facility_name: "Sterigenics",
+                            full_address: "75 Tilbury Rd\nSalem, NJ 08079"
+                        },
+                        {
+                            type: "PU",
+                            date: "08/25",
+                            time: "08:00",
+                            pickup_number: "23046946",
+                            facility_name: "Sterigenics",
+                            full_address: "75 Tilbury Rd\nSalem, NJ 08079"
+                        },
+                        {
+                            type: "DEL",
+                            date: "08/26",
+                            time: "08:00",
+                            facility_name: "Nutrition & Bioscience",
+                            full_address: "6 McJunkin Rd\nNitro, WV 25143"
+                        }
+                    ],
+                    rate: "3937"
                 };
                 dispatchBox.textContent = formatDispatchMessage(sample);
                 hideProcessing();
             }, 800);
+        }
+
+        function cleanString(str) {
+            return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function isSameLocation(s1, s2) {
+            if (!s1 || !s2) return false;
+            const f1 = cleanString(s1.facility_name);
+            const f2 = cleanString(s2.facility_name);
+            const a1 = cleanString(s1.full_address);
+            const a2 = cleanString(s2.full_address);
+
+            if (f1 && f2 && (f1 === f2 || f1.includes(f2) || f2.includes(f1))) return true;
+            if (a1 && a2 && (a1 === a2 || a1.includes(a2) || a2.includes(a1))) return true;
+            return false;
         }
 
         function formatDispatchMessage(data) {
@@ -580,13 +619,46 @@ Return ONLY pure JSON.`;
             const refNum = data.ref_number || "";
             const rate = data.rate ? data.rate.toString().replace('$', '').trim() : "N/A";
 
+            let rawStops = Array.isArray(data.stops) ? data.stops : [];
+            let processedStops = [];
+
+            // Step 1: Consolidate adjacent DEL + PU at the same facility into a single RELOAD stop
+            for (let i = 0; i < rawStops.length; i++) {
+                const current = rawStops[i];
+                const next = rawStops[i + 1];
+
+                const cType = (current.type || '').toUpperCase();
+                const nType = next ? (next.type || '').toUpperCase() : '';
+
+                if (cType === 'DEL' && nType === 'PU' && isSameLocation(current, next)) {
+                    // Combine into RELOAD stop
+                    processedStops.push({
+                        type: 'RELOAD',
+                        date: current.date || next.date,
+                        time: `${current.time || ''} ${next.time || ''}`.trim() || '08:00',
+                        pickup_number: next.pickup_number || current.pickup_number,
+                        facility_name: current.facility_name || next.facility_name,
+                        full_address: current.full_address || next.full_address
+                    });
+                    i++; // skip next since it's merged
+                } else {
+                    processedStops.push(current);
+                }
+            }
+
             let stopsText = "";
-            if (data.stops && Array.isArray(data.stops) && data.stops.length >= 2) {
-                const puCount = data.stops.filter(s => (s.type || '').toUpperCase() === 'PU').length;
-                const delCount = data.stops.filter(s => (s.type || '').toUpperCase() === 'DEL').length;
+
+            if (processedStops.length >= 2) {
+                const hasReload = processedStops.some(s => (s.type || '').toUpperCase() === 'RELOAD');
+                const puStops = processedStops.filter(s => (s.type || '').toUpperCase() === 'PU');
+                const delStops = processedStops.filter(s => (s.type || '').toUpperCase() === 'DEL');
+
+                // Determine if this is a Multi-Stop (different addresses) vs Reload/Round-Trip
+                const isMultiStopDifferentAddresses = !hasReload && (puStops.length > 1 || delStops.length > 1);
+
                 let puIdx = 0, delIdx = 0;
 
-                const blocks = data.stops.map(s => {
+                const blocks = processedStops.map((s, idx) => {
                     const type = (s.type || '').toUpperCase();
                     const date = cleanDate(s.date);
                     const time = s.time || "HH:MM";
@@ -596,20 +668,24 @@ Return ONLY pure JSON.`;
 
                     if (type === 'PU') {
                         puIdx++;
-                        const lbl = puCount > 1 ? `PU${puIdx}` : 'PU';
+                        const lbl = isMultiStopDifferentAddresses ? `PU${puIdx}` : 'PU';
                         return `${lbl} time : ${time}  ${date}\nPU #  ${sPu}\n\n${lbl} location :\n ${fac}\n${addr}`;
                     } else if (type === 'DEL') {
                         delIdx++;
-                        const lbl = delCount > 1 ? `DEL${delIdx}` : 'DEL';
+                        const lbl = isMultiStopDifferentAddresses ? `DEL${delIdx}` : 'DEL';
                         return `${lbl} time : ${time}   ${date}\n\n${lbl} location :\n${fac}\n${addr}`;
                     } else if (type === 'RELOAD') {
-                        return `RELOAD time : ${time}   ${date}\nPU # ${sPu}\n${fac}\n${addr}`;
+                        const reloadPu = s.pickup_number || "";
+                        const puLine = reloadPu ? `\nPU # ${reloadPu}` : "";
+                        return `RELOAD time : ${time}   ${date}${puLine}\n${fac}\n${addr}`;
                     } else {
                         return `${type} time : ${time}   ${date}\n${fac}\n${addr}`;
                     }
                 });
+
                 stopsText = blocks.join('\n\n');
             } else {
+                // Single Leg Format
                 const pu = data.pickup || {};
                 const del = data.delivery || {};
                 stopsText = `PU time : ${pu.time || 'FCFS'}  ${cleanDate(pu.date)}\nPU #  ${puNum}\n\nPU location :\n ${pu.facility_name || 'N/A'}\n${pu.full_address || 'N/A'}\n\nDEL time : ${del.time || '06:00'}   ${cleanDate(del.date)}\n\nDEL location :\n${del.facility_name || 'N/A'}\n${del.full_address || 'N/A'}`;

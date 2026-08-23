@@ -608,18 +608,60 @@ def format_dispatch_message(data: dict) -> str:
     pu_num_display = pickup_num if pickup_num and pickup_num not in ["N/A", ""] else ""
     ref_num_display = ref_num if ref_num and ref_num not in ["N/A", ""] else ""
 
-    stops_data = data.get("stops", [])
+    # Helper to clean strings for location matching
+    def clean_str(s):
+        return re.sub(r'[^a-z0-9]', '', str(s or '').lower())
 
-    if isinstance(stops_data, list) and len(stops_data) >= 2:
+    def is_same_location(s1, s2):
+        if not isinstance(s1, dict) or not isinstance(s2, dict):
+            return False
+        f1, f2 = clean_str(s1.get("facility_name")), clean_str(s2.get("facility_name"))
+        a1, a2 = clean_str(s1.get("full_address")), clean_str(s2.get("full_address"))
+        if f1 and f2 and (f1 in f2 or f2 in f1):
+            return True
+        if a1 and a2 and (a1 in a2 or a2 in a1):
+            return True
+        return False
+
+    raw_stops = data.get("stops", [])
+    processed_stops = []
+
+    if isinstance(raw_stops, list) and len(raw_stops) >= 2:
+        i = 0
+        while i < len(raw_stops):
+            curr = raw_stops[i]
+            nxt = raw_stops[i + 1] if i + 1 < len(raw_stops) else None
+
+            if isinstance(curr, dict) and isinstance(nxt, dict):
+                c_type = str(curr.get("type", "")).upper()
+                n_type = str(nxt.get("type", "")).upper()
+
+                if c_type == "DEL" and n_type == "PU" and is_same_location(curr, nxt):
+                    merged_stop = {
+                        "type": "RELOAD",
+                        "date": curr.get("date") or nxt.get("date"),
+                        "time": f"{curr.get('time', '')} {nxt.get('time', '')}".strip() or "08:00",
+                        "pickup_number": nxt.get("pickup_number") or curr.get("pickup_number"),
+                        "facility_name": curr.get("facility_name") or nxt.get("facility_name"),
+                        "full_address": curr.get("full_address") or nxt.get("full_address")
+                    }
+                    processed_stops.append(merged_stop)
+                    i += 2
+                    continue
+            processed_stops.append(curr)
+            i += 1
+
+    if processed_stops and len(processed_stops) >= 2:
         stop_blocks = []
+        has_reload = any(isinstance(s, dict) and str(s.get("type", "")).upper() == "RELOAD" for s in processed_stops)
+        pu_count = sum(1 for s in processed_stops if isinstance(s, dict) and str(s.get("type", "")).upper() == "PU")
+        del_count = sum(1 for s in processed_stops if isinstance(s, dict) and str(s.get("type", "")).upper() == "DEL")
 
-        # Count PU and DEL stops for numbering (PU1, PU2, DEL1, DEL2)
-        pu_count = sum(1 for s in stops_data if isinstance(s, dict) and str(s.get("type", "")).upper() == "PU")
-        del_count = sum(1 for s in stops_data if isinstance(s, dict) and str(s.get("type", "")).upper() == "DEL")
+        is_multistop_diff_addr = not has_reload and (pu_count > 1 or del_count > 1)
         pu_idx = 0
         del_idx = 0
 
-        for idx, stop in enumerate(stops_data):
+        for idx, stop in enumerate(processed_stops):
             if not isinstance(stop, dict):
                 continue
             s_type = str(stop.get("type", "")).upper()
@@ -631,24 +673,23 @@ def format_dispatch_message(data: dict) -> str:
 
             if s_type == "PU":
                 pu_idx += 1
-                label = f"PU{pu_idx}" if pu_count > 1 else "PU"
+                label = f"PU{pu_idx}" if is_multistop_diff_addr else "PU"
                 block = f"{label} time : {s_time}  {s_date}\nPU #  {s_pu_num}\n\n{label} location :\n {s_fac}\n{s_addr}"
                 stop_blocks.append(block)
 
             elif s_type == "DEL":
                 del_idx += 1
-                label = f"DEL{del_idx}" if del_count > 1 else "DEL"
+                label = f"DEL{del_idx}" if is_multistop_diff_addr else "DEL"
                 block = f"{label} time : {s_time}   {s_date}\n\n{label} location :\n{s_fac}\n{s_addr}"
                 stop_blocks.append(block)
 
             elif s_type == "RELOAD":
-                # RELOAD — single consolidated block
-                reload_pu = s_pu_num if s_pu_num and s_pu_num not in ["N/A", ""] else ""
-                block = f"RELOAD time : {s_time}   {s_date}\nPU # {reload_pu}\n{s_fac}\n{s_addr}"
+                reload_pu = clean_val(stop.get("pickup_number"))
+                pu_line = f"\nPU # {reload_pu}" if reload_pu and reload_pu != "N/A" else ""
+                block = f"RELOAD time : {s_time}   {s_date}{pu_line}\n{s_fac}\n{s_addr}"
                 stop_blocks.append(block)
 
             else:
-                # Unknown type — format as generic stop
                 block = f"{s_type} time : {s_time}   {s_date}\n{s_fac}\n{s_addr}"
                 stop_blocks.append(block)
 
