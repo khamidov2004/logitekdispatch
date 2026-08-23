@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.streamlit/secrets.toml
+sample_rc_*.pdf
+sample_rc_*.png
+generate_sample_rc.py
