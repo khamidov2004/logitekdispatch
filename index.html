@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LOGITEK DISPATCH - Rate Confirmation AI</title>
+    <title>LOGITEK DISPATCH - Liquid AI Rate Confirmation Engine</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-gradient: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 50%, #020617 100%);
-            --glass-bg: rgba(255, 255, 255, 0.04);
+            --bg-dark: #030712;
+            --glass-bg: rgba(255, 255, 255, 0.035);
             --glass-border: rgba(255, 255, 255, 0.12);
             --glass-hover: rgba(255, 255, 255, 0.08);
-            --accent-cyan: #38bdf8;
-            --accent-blue: #818cf8;
-            --accent-purple: #c084fc;
+            --cyan-glow: #38bdf8;
+            --blue-glow: #6366f1;
+            --purple-glow: #a855f7;
+            --emerald-glow: #10b981;
             --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-sub: #94a3b8;
+            --radius-xl: 32px;
             --radius-lg: 24px;
             --radius-md: 16px;
             --radius-sm: 12px;
@@ -28,122 +30,168 @@
             margin: 0;
             padding: 0;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
         body {
-            background: var(--bg-gradient);
-            background-attachment: fixed;
+            background: var(--bg-dark);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 2rem 1rem;
+            padding: 2.5rem 1rem;
+            position: relative;
             overflow-x: hidden;
         }
 
-        .container {
-            width: 100%;
-            max-width: 900px;
+        /* Dynamic Liquid Ambient Background Blobs */
+        .liquid-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+            animation: floatBlob 18s ease-in-out infinite alternate;
         }
 
-        /* Hero Banner - Liquid iOS 26 Theme */
-        .hero-banner {
+        .blob-1 {
+            top: -100px;
+            left: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(99, 102, 241, 0.15) 100%);
+        }
+
+        .blob-2 {
+            bottom: -150px;
+            right: -100px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, rgba(56, 189, 248, 0.1) 100%);
+            animation-delay: -9s;
+        }
+
+        .blob-3 {
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(99, 102, 241, 0.1) 100%);
+            animation-duration: 22s;
+        }
+
+        @keyframes floatBlob {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, 40px) scale(1.1); }
+            100% { transform: translate(-30px, -20px) scale(0.95); }
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 920px;
             position: relative;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
-            backdrop-filter: blur(35px);
-            -webkit-backdrop-filter: blur(35px);
+            z-index: 10;
+        }
+
+        /* Liquid Glass Card System */
+        .liquid-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
             border: 1px solid var(--glass-border);
-            border-radius: var(--radius-lg);
-            padding: 2.5rem 2rem;
+            border-radius: var(--radius-xl);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Hero Header */
+        .hero-card {
+            padding: 3rem 2rem;
             text-align: center;
             margin-bottom: 2rem;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-            overflow: hidden;
-            animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: heroSlideDown 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .ambient-aura {
+        .hero-card::before {
+            content: '';
             position: absolute;
-            top: -80px;
-            right: -80px;
-            width: 320px;
-            height: 320px;
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(129, 140, 248, 0.15) 50%, transparent 70%);
-            filter: blur(60px);
-            border-radius: 50%;
-            pointer-events: none;
-            animation: auraPulse 6s ease-in-out infinite alternate;
-        }
-
-        @keyframes auraPulse {
-            0% { transform: scale(1) translate(0, 0); opacity: 0.8; }
-            100% { transform: scale(1.2) translate(-20px, 20px); opacity: 1; }
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan-glow), var(--purple-glow), transparent);
         }
 
         .brand-title {
-            font-size: 3.2rem;
+            font-size: 3.6rem;
             font-weight: 900;
-            letter-spacing: -1.5px;
-            background: linear-gradient(135deg, #ffffff 0%, #a5f3fc 35%, #38bdf8 70%, #818cf8 100%);
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #ffffff 0%, #bae6fd 30%, #38bdf8 65%, #818cf8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 10px 30px rgba(56, 189, 248, 0.25);
-            margin-bottom: 0.4rem;
+            text-shadow: 0 12px 35px rgba(56, 189, 248, 0.3);
+            margin-bottom: 0.5rem;
+            line-height: 1.1;
         }
 
         .brand-subtitle {
             font-size: 1.15rem;
-            font-weight: 700;
-            letter-spacing: 4px;
-            color: #93c5fd;
+            font-weight: 800;
+            letter-spacing: 6px;
+            color: #7dd3fc;
             text-transform: uppercase;
-            opacity: 0.95;
-            text-shadow: 0 0 15px rgba(147, 197, 253, 0.5);
-        }
-
-        /* Glass Card */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.4rem 1.4rem;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 50px;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
         }
 
         /* Upload Area */
-        .upload-grid {
-            display: grid;
-            grid-template-columns: 3fr 1fr;
-            gap: 1rem;
-            align-items: center;
+        .upload-section {
+            padding: 2.2rem;
+            margin-bottom: 2rem;
+            animation: heroSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards;
         }
 
-        @media (max-width: 640px) {
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 3.5fr 1.2fr;
+            gap: 1.2rem;
+            align-items: stretch;
+        }
+
+        @media (max-width: 680px) {
             .upload-grid { grid-template-columns: 1fr; }
-            .brand-title { font-size: 2.2rem; }
+            .brand-title { font-size: 2.4rem; }
         }
 
         .drop-zone {
-            border: 2px dashed rgba(56, 189, 248, 0.4);
-            border-radius: var(--radius-md);
-            padding: 2rem 1.5rem;
+            border: 2px dashed rgba(56, 189, 248, 0.35);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 1.5rem;
             text-align: center;
             cursor: pointer;
-            background: rgba(15, 23, 42, 0.4);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(15, 23, 42, 0.45);
             position: relative;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .drop-zone:hover, .drop-zone.dragover {
-            border-color: var(--accent-cyan);
+            border-color: var(--cyan-glow);
             background: rgba(56, 189, 248, 0.08);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.15);
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 15px 35px rgba(56, 189, 248, 0.2), inset 0 0 15px rgba(56, 189, 248, 0.1);
         }
 
         .drop-zone input[type="file"] {
@@ -153,278 +201,375 @@
             cursor: pointer;
         }
 
-        .upload-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            display: block;
+        .icon-wrapper {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .drop-zone:hover .icon-wrapper {
+            transform: scale(1.1) rotate(5deg);
         }
 
         .upload-title {
-            font-size: 1.1rem;
-            font-weight: 600;
+            font-size: 1.2rem;
+            font-weight: 700;
             color: #f1f5f9;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.3rem;
         }
 
         .upload-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            font-size: 0.9rem;
+            color: var(--text-sub);
         }
 
         .btn-sample {
-            height: 100%;
-            min-height: 90px;
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(129, 140, 248, 0.15) 100%);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: var(--radius-lg);
             color: #e0f2fe;
-            font-weight: 600;
-            font-size: 0.95rem;
+            font-weight: 700;
+            font-size: 1rem;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem;
-            padding: 1rem;
-            transition: all 0.3s ease;
+            gap: 0.5rem;
+            padding: 1.5rem 1rem;
+            transition: all 0.35s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .btn-sample:hover {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.3) 0%, rgba(129, 140, 248, 0.3) 100%);
-            border-color: var(--accent-cyan);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2);
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.3) 0%, rgba(168, 85, 247, 0.3) 100%);
+            border-color: var(--cyan-glow);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(168, 85, 247, 0.25);
         }
 
-        /* Animated Truck Processing Container */
-        .truck-container {
+        .btn-sample:active { transform: translateY(-1px); }
+
+        /* Liquid Highway Truck Processing Animation */
+        .processing-card {
             display: none;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
+            padding: 2rem;
             margin-top: 1.5rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.15);
+            animation: pulseGlow 2s ease-in-out infinite alternate;
         }
 
-        .truck-status {
+        @keyframes pulseGlow {
+            0% { border-color: rgba(56, 189, 248, 0.4); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.15); }
+            100% { border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(168, 85, 247, 0.25); }
+        }
+
+        .status-header {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #38bdf8;
-            margin-bottom: 1rem;
-        }
-
-        .truck-road {
-            position: relative;
-            height: 48px;
-            border-bottom: 2px dashed rgba(255, 255, 255, 0.2);
-            overflow: hidden;
-            margin-bottom: 1rem;
-        }
-
-        .truck-icon {
-            position: absolute;
-            left: 0%;
-            bottom: 2px;
-            font-size: 2rem;
-            transform: translateX(-50%);
-            transition: left 0.3s ease;
-            filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.6));
-        }
-
-        .progress-bar-bg {
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #38bdf8, #818cf8);
-            border-radius: 4px;
-            transition: width 0.3s ease;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
-        }
-
-        /* Output Section */
-        .output-card {
-            display: none;
-            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .output-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.2rem;
-        }
-
-        .output-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #f8fafc;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-copy {
-            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
-            color: #ffffff;
-            border: none;
-            border-radius: var(--radius-sm);
-            padding: 0.75rem 1.4rem;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.35);
-            transition: all 0.3s ease;
-        }
-
-        .btn-copy:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(2, 132, 199, 0.5);
-            background: linear-gradient(135deg, #0369a1 0%, #4338ca 100%);
-        }
-
-        .btn-copy:active { transform: translateY(0); }
-
-        .dispatch-box {
-            background: #020617;
-            border: 1px solid rgba(56, 189, 248, 0.25);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            color: #e2e8f0;
-            white-space: pre-wrap;
-            word-break: break-word;
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
+            gap: 0.8rem;
             margin-bottom: 1.5rem;
         }
 
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: rgba(16, 185, 129, 0.9);
-            backdrop-filter: blur(10px);
-            color: #ffffff;
-            padding: 0.8rem 1.5rem;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        .spinner-ring {
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
+            border-top-color: var(--cyan-glow);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .status-text {
+            font-size: 1.05rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Neon Highway & Animated Truck */
+        .highway-track {
+            position: relative;
+            height: 60px;
+            background: rgba(2, 6, 23, 0.7);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+            margin-bottom: 1.2rem;
+            box-shadow: inset 0 4px 15px rgba(0, 0, 0, 0.8);
+        }
+
+        .road-dashes {
+            position: absolute;
+            top: 50%; left: 0; width: 200%; height: 2px;
+            transform: translateY(-50%);
+            background: repeating-linear-gradient(90deg, #38bdf8 0, #38bdf8 25px, transparent 25px, transparent 45px);
+            opacity: 0.4;
+            animation: roadMove 1s linear infinite;
+        }
+
+        @keyframes roadMove {
+            0% { transform: translate(0, -50%); }
+            100% { transform: translate(-45px, -50%); }
+        }
+
+        .truck-element {
+            position: absolute;
+            bottom: 6px;
+            left: 0%;
+            transform: translateX(-50%);
+            font-size: 2.4rem;
+            transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.8));
+            z-index: 5;
+        }
+
+        .exhaust-smoke {
+            position: absolute;
+            bottom: 16px;
+            left: -20px;
+            font-size: 1rem;
+            opacity: 0.7;
+            animation: smokePuff 0.6s ease-out infinite;
+        }
+
+        @keyframes smokePuff {
+            0% { transform: scale(0.5) translate(0, 0); opacity: 0.8; }
+            100% { transform: scale(1.5) translate(-25px, -15px); opacity: 0; }
+        }
+
+        .bar-bg {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #38bdf8, #818cf8, #a855f7);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.9);
+        }
+
+        /* Results Display Card */
+        .results-section {
             display: none;
-            animation: fadeIn 0.3s ease;
+            padding: 2.2rem;
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .results-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, #0284c7 0%, #6366f1 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.95rem 1.8rem;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 10px 30px rgba(2, 132, 199, 0.4);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-copy:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(2, 132, 199, 0.6);
+            background: linear-gradient(135deg, #0369a1 0%, #4f46e5 100%);
+        }
+
+        .btn-copy:active { transform: translateY(0) scale(0.98); }
+
+        .dispatch-code-box {
+            background: #020617;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 1.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            line-height: 1.65;
+            color: #f1f5f9;
+            white-space: pre-wrap;
+            word-break: break-word;
+            box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.08);
+            position: relative;
+        }
+
+        /* Toast Popup */
+        .liquid-toast {
+            position: fixed;
+            bottom: 2.5rem;
+            right: 2.5rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%);
+            backdrop-filter: blur(15px);
+            color: #ffffff;
+            padding: 1rem 1.8rem;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 25px rgba(16, 185, 129, 0.5);
+            display: none;
             z-index: 1000;
+            animation: toastPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
+        @keyframes toastPop {
+            0% { opacity: 0; transform: translateY(30px) scale(0.8); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes heroSlideDown {
+            from { opacity: 0; transform: translateY(-30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
+        @keyframes heroSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- Hero Header -->
-        <header class="hero-banner">
-            <div class="ambient-aura"></div>
+    <!-- Liquid Background Blobs -->
+    <div class="liquid-blob blob-1"></div>
+    <div class="liquid-blob blob-2"></div>
+    <div class="liquid-blob blob-3"></div>
+
+    <div class="app-container">
+        <!-- Hero Card -->
+        <header class="liquid-card hero-card">
             <h1 class="brand-title">LOGITEK DISPATCH</h1>
-            <div class="brand-subtitle">JOIN OUR TEAM</div>
+            <div class="brand-subtitle">
+                <span>⚡</span>
+                <span>JOIN OUR TEAM</span>
+            </div>
         </header>
 
-        <!-- Main Upload Card -->
-        <main class="glass-card">
+        <!-- Upload & Test Card -->
+        <main class="liquid-card upload-section">
             <div class="upload-grid">
                 <div class="drop-zone" id="dropZone">
                     <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png">
-                    <span class="upload-icon">📄</span>
+                    <div class="icon-wrapper">
+                        <span>📄</span>
+                    </div>
                     <div class="upload-title">Upload Rate Confirmation</div>
-                    <div class="upload-desc">Drag & drop PDF or Image file here (or click to browse)</div>
+                    <div class="upload-desc">Drag & drop your PDF or image Rate Confirmation here</div>
                 </div>
                 <button class="btn-sample" id="btnSample">
-                    <span style="font-size: 1.4rem;">🧪</span>
+                    <span style="font-size: 1.8rem;">🧪</span>
                     <span>Test Sample RC</span>
                 </button>
             </div>
 
-            <!-- Animated Truck Processing Bar -->
-            <div class="truck-container" id="truckContainer">
-                <div class="truck-status">
-                    <span style="display: inline-block; width: 10px; height: 10px; background: #38bdf8; border-radius: 50%; box-shadow: 0 0 10px #38bdf8;"></span>
-                    <span id="truckMessage">Extracting document data & dispatching AI engine...</span>
+            <!-- Animated Truck Processing Component -->
+            <div class="processing-card" id="processingCard">
+                <div class="status-header">
+                    <div class="spinner-ring"></div>
+                    <span class="status-text" id="statusText">Reading document & activating AI vision parser...</span>
                 </div>
-                <div class="truck-road">
-                    <div class="truck-icon" id="truckIcon">🚚</div>
+                <div class="highway-track">
+                    <div class="road-dashes"></div>
+                    <div class="truck-element" id="truckElement">
+                        🚚
+                        <span class="exhaust-smoke">💨</span>
+                    </div>
                 </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progressFill"></div>
+                <div class="bar-bg">
+                    <div class="bar-fill" id="barFill"></div>
                 </div>
             </div>
         </main>
 
-        <!-- Output Result Card -->
-        <section class="glass-card output-card" id="outputCard">
-            <div class="output-header">
-                <div class="output-title">
-                    <span>⚡</span>
-                    <span>Generated Dispatch Message</span>
+        <!-- Results Output Section -->
+        <section class="liquid-card results-section" id="resultsSection">
+            <div class="results-header">
+                <div class="results-title">
+                    <span style="color: #38bdf8;">✨</span>
+                    <span>Parsed Dispatch Template</span>
                 </div>
                 <button class="btn-copy" id="btnCopy">
                     <span>📋</span>
                     <span>Copy Dispatch</span>
                 </button>
             </div>
-            <div class="dispatch-box" id="dispatchBox"></div>
+            <div class="dispatch-code-box" id="dispatchCodeBox"></div>
         </section>
     </div>
 
-    <div class="toast" id="toast">📋 Copied to clipboard!</div>
+    <!-- Toast Notification -->
+    <div class="liquid-toast" id="liquidToast">
+        <span>✅</span> Dispatch copied to clipboard!
+    </div>
 
     <script>
-        // API Key encoded
-        const ENCODED_KEY = "QVEuQWI4Uk42THhEM3lJdmlIN2txaDg1OHlWZmI0Wjc5bW1ycXRTOVRaOGxqRndKeHRpa3c=";
+        // Obfuscated Gemini API key
+        const API_KEY_B64 = "QVEuQWI4Uk42THhEM3lJdmlIN2txaDg1OHlWZmI0Wjc5bW1ycXRTOVRaOGxqRndKeHRpa3c=";
         function getApiKey() {
-            return atob(ENCODED_KEY);
+            return atob(API_KEY_B64);
         }
 
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const btnSample = document.getElementById('btnSample');
-        const truckContainer = document.getElementById('truckContainer');
-        const truckIcon = document.getElementById('truckIcon');
-        const progressFill = document.getElementById('progressFill');
-        const outputCard = document.getElementById('outputCard');
-        const dispatchBox = document.getElementById('dispatchBox');
+        const processingCard = document.getElementById('processingCard');
+        const statusText = document.getElementById('statusText');
+        const truckElement = document.getElementById('truckElement');
+        const barFill = document.getElementById('barFill');
+        const resultsSection = document.getElementById('resultsSection');
+        const dispatchCodeBox = document.getElementById('dispatchCodeBox');
         const btnCopy = document.getElementById('btnCopy');
-        const toast = document.getElementById('toast');
+        const liquidToast = document.getElementById('liquidToast');
 
-        // Drag & Drop
+        // Drag & Drop Handlers
         ['dragenter', 'dragover'].forEach(name => {
             dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         });
@@ -434,61 +579,61 @@
 
         dropZone.addEventListener('drop', (e) => {
             const files = e.dataTransfer.files;
-            if (files.length) handleFile(files[0]);
+            if (files.length) processFile(files[0]);
         });
 
-        fileInput.addEventListener('change', (e) => {
-            if (fileInput.files.length) handleFile(fileInput.files[0]);
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) processFile(fileInput.files[0]);
         });
 
-        btnSample.addEventListener('click', () => {
-            handleSampleData();
-        });
+        btnSample.addEventListener('click', runSampleDemo);
 
         btnCopy.addEventListener('click', () => {
-            const text = dispatchBox.textContent;
+            const text = dispatchCodeBox.textContent;
             navigator.clipboard.writeText(text).then(() => {
-                toast.style.display = 'block';
-                setTimeout(() => { toast.style.display = 'none'; }, 2000);
+                liquidToast.style.display = 'block';
+                setTimeout(() => { liquidToast.style.display = 'none'; }, 2400);
             });
         });
 
-        function updateProgress(percent) {
-            progressFill.style.width = percent + '%';
-            truckIcon.style.left = percent + '%';
+        function updateProgress(percent, msg) {
+            barFill.style.width = percent + '%';
+            truckElement.style.left = percent + '%';
+            if (msg) statusText.textContent = msg;
         }
 
-        function showProcessing() {
-            outputCard.style.display = 'none';
-            truckContainer.style.display = 'block';
-            updateProgress(10);
+        function startProcessing() {
+            resultsSection.style.display = 'none';
+            processingCard.style.display = 'block';
+            updateProgress(10, "Initializing AI document scanner...");
         }
 
-        function hideProcessing() {
-            updateProgress(100);
+        function finishProcessing() {
+            updateProgress(100, "Processing complete!");
             setTimeout(() => {
-                truckContainer.style.display = 'none';
-                outputCard.style.display = 'block';
+                processingCard.style.display = 'none';
+                resultsSection.style.display = 'block';
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 600);
         }
 
-        function handleFile(file) {
-            showProcessing();
-            updateProgress(35);
+        function processFile(file) {
+            startProcessing();
+            updateProgress(25, "Extracting text and page graphics...");
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                const base64Data = e.target.result.split(',')[1];
+                const base64Content = e.target.result.split(',')[1];
                 const mimeType = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
                 
-                updateProgress(60);
-                parseDocumentWithAI(base64Data, mimeType);
+                updateProgress(50, "Analyzing Rate Confirmation with Gemini AI...");
+                requestAIParsing(base64Content, mimeType);
             };
             reader.readAsDataURL(file);
         }
 
-        async function parseDocumentWithAI(base64Data, mimeType) {
-            const prompt = `You are an expert logistics Rate Confirmation parsing system.
+        async function requestAIParsing(base64Content, mimeType) {
+            const systemPrompt = `You are an expert logistics Rate Confirmation parsing system.
 Extract all details from the document into a valid JSON object matching this exact schema:
 {
   "broker": "Full Broker Name (e.g. RXO, C.H. Robinson, TQL, Echo)",
@@ -498,7 +643,7 @@ Extract all details from the document into a valid JSON object matching this exa
   "is_round_trip": false,
   "stops": [
     {
-      "type": "PU", // "PU", "DEL", or "RELOAD"
+      "type": "PU",
       "date": "MM/DD",
       "time": "HH:MM",
       "pickup_number": "PU # for this stop if available",
@@ -515,44 +660,44 @@ Important:
 - List all stops in chronological order.
 Return ONLY valid JSON.`;
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getApiKey()}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getApiKey()}`;
 
             const payload = {
                 contents: [{
                     parts: [
-                        { text: prompt },
-                        { inline_data: { mime_type: mimeType, data: base64Data } }
+                        { text: systemPrompt },
+                        { inline_data: { mime_type: mimeType, data: base64Content } }
                     ]
                 }],
                 generationConfig: { response_mime_type: "application/json" }
             };
 
             try {
-                updateProgress(80);
-                const resp = await fetch(url, {
+                updateProgress(75, "Extracting stops & formatting dispatch template...");
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const resData = await resp.json();
-                const jsonText = resData.candidates[0].content.parts[0].text;
-                const parsed = JSON.parse(jsonText);
+                const resJson = await response.json();
+                const rawJsonText = resJson.candidates[0].content.parts[0].text;
+                const parsedData = JSON.parse(rawJsonText);
                 
-                const formattedDispatch = formatDispatchMessage(parsed);
-                dispatchBox.textContent = formattedDispatch;
-                hideProcessing();
+                dispatchCodeBox.textContent = buildDispatchMessage(parsedData);
+                finishProcessing();
             } catch (err) {
-                console.error("AI Error:", err);
-                handleSampleData();
+                console.error("Gemini API Error:", err);
+                runSampleDemo();
             }
         }
 
-        function handleSampleData() {
-            showProcessing();
-            updateProgress(50);
+        function runSampleDemo() {
+            startProcessing();
+            updateProgress(30, "Loading RXO sample document...");
+
             setTimeout(() => {
-                updateProgress(85);
-                const sample = {
+                updateProgress(70, "Consolidating reload stops & formatting...");
+                const sampleData = {
                     broker: "RXO",
                     load_id: "23927168",
                     pickup_number: "23046522",
@@ -591,28 +736,29 @@ Return ONLY valid JSON.`;
                     ],
                     rate: "3937"
                 };
-                dispatchBox.textContent = formatDispatchMessage(sample);
-                hideProcessing();
-            }, 800);
+
+                dispatchCodeBox.textContent = buildDispatchMessage(sampleData);
+                finishProcessing();
+            }, 750);
         }
 
-        function cleanString(str) {
-            return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        function cleanStr(s) {
+            return (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
         }
 
         function isSameLocation(s1, s2) {
             if (!s1 || !s2) return false;
-            const f1 = cleanString(s1.facility_name);
-            const f2 = cleanString(s2.facility_name);
-            const a1 = cleanString(s1.full_address);
-            const a2 = cleanString(s2.full_address);
+            const f1 = cleanStr(s1.facility_name);
+            const f2 = cleanStr(s2.facility_name);
+            const a1 = cleanStr(s1.full_address);
+            const a2 = cleanStr(s2.full_address);
 
             if (f1 && f2 && (f1 === f2 || f1.includes(f2) || f2.includes(f1))) return true;
             if (a1 && a2 && (a1 === a2 || a1.includes(a2) || a2.includes(a1))) return true;
             return false;
         }
 
-        function formatDispatchMessage(data) {
+        function buildDispatchMessage(data) {
             const broker = data.broker || "N/A";
             const loadId = data.load_id || "N/A";
             const puNum = data.pickup_number || "";
@@ -631,7 +777,6 @@ Return ONLY valid JSON.`;
                 const nType = next ? (next.type || '').toUpperCase() : '';
 
                 if (cType === 'DEL' && nType === 'PU' && isSameLocation(current, next)) {
-                    // Combine into RELOAD stop
                     processedStops.push({
                         type: 'RELOAD',
                         date: current.date || next.date,
@@ -646,19 +791,18 @@ Return ONLY valid JSON.`;
                 }
             }
 
-            let stopsText = "";
+            let stopsFormattedText = "";
 
             if (processedStops.length >= 2) {
                 const hasReload = processedStops.some(s => (s.type || '').toUpperCase() === 'RELOAD');
                 const puStops = processedStops.filter(s => (s.type || '').toUpperCase() === 'PU');
                 const delStops = processedStops.filter(s => (s.type || '').toUpperCase() === 'DEL');
 
-                // Determine if this is a Multi-Stop (different addresses) vs Reload/Round-Trip
                 const isMultiStopDifferentAddresses = !hasReload && (puStops.length > 1 || delStops.length > 1);
 
                 let puIdx = 0, delIdx = 0;
 
-                const blocks = processedStops.map((s, idx) => {
+                const blocks = processedStops.map((s) => {
                     const type = (s.type || '').toUpperCase();
                     const date = cleanDate(s.date);
                     const time = s.time || "HH:MM";
@@ -683,12 +827,12 @@ Return ONLY valid JSON.`;
                     }
                 });
 
-                stopsText = blocks.join('\n\n');
+                stopsFormattedText = blocks.join('\n\n');
             } else {
                 // Single Leg Format
                 const pu = data.pickup || {};
                 const del = data.delivery || {};
-                stopsText = `PU time : ${pu.time || 'FCFS'}  ${cleanDate(pu.date)}\nPU #  ${puNum}\n\nPU location :\n ${pu.facility_name || 'N/A'}\n${pu.full_address || 'N/A'}\n\nDEL time : ${del.time || '06:00'}   ${cleanDate(del.date)}\n\nDEL location :\n${del.facility_name || 'N/A'}\n${del.full_address || 'N/A'}`;
+                stopsFormattedText = `PU time : ${pu.time || 'FCFS'}  ${cleanDate(pu.date)}\nPU #  ${puNum}\n\nPU location :\n ${pu.facility_name || 'N/A'}\n${pu.full_address || 'N/A'}\n\nDEL time : ${del.time || '06:00'}   ${cleanDate(del.date)}\n\nDEL location :\n${del.facility_name || 'N/A'}\n${del.full_address || 'N/A'}`;
             }
 
             return `Broker: ${broker}
@@ -697,7 +841,7 @@ LOAD ID : ${loadId}
 PU#  ${puNum}
 REF#  ${refNum}
 
-${stopsText}
+${stopsFormattedText}
 
 RATE: ${rate}$
 
