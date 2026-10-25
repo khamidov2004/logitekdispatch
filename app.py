@@ -944,3 +944,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# ==========================================
+# VERCEL SERVERLESS ENTRYPOINT COMPATIBILITY
+# ==========================================
+def handler(request=None, *args, **kwargs):
+    """Fallback handler so Vercel does not error if it scans app.py."""
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "text/html; charset=utf-8"},
+        "body": "Logitek Dispatch System Operational"
+    }
+
+app = handler
+application = handler
+
