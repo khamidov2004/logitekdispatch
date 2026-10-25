@@ -1,6 +1,16 @@
 {
   "version": 2,
   "cleanUrls": true,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "favicon.png", "use": "@vercel/static" },
+    { "src": "logo.png", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/favicon.png", "dest": "/favicon.png" },
+    { "src": "/logo.png", "dest": "/logo.png" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

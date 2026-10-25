@@ -8,3 +8,7 @@ sample_rc_*.png
 generate_sample_rc.py
 tmp/
 .vscode/
+.vercel/
+pyproject.toml
+
+.vercel

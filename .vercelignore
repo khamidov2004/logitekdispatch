@@ -10,3 +10,5 @@ nginx.conf
 sample_rc_*.pdf
 sample_rc_*.png
 tmp
+pyproject.toml
+
