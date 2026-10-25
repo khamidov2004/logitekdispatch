@@ -6,3 +6,5 @@ __pycache__/
 sample_rc_*.pdf
 sample_rc_*.png
 generate_sample_rc.py
+tmp/
+.vscode/

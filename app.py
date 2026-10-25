@@ -2,7 +2,12 @@ import os
 import io
 import json
 import re
-import streamlit as st
+try:
+    import streamlit as st
+    STREAMLIT_AVAILABLE = True
+except ImportError:
+    st = None
+    STREAMLIT_AVAILABLE = False
 from PIL import Image
 
 # Import pdfplumber for PDF text extraction
@@ -44,15 +49,18 @@ except ImportError:
 # ==========================================
 # STREAMLIT PAGE CONFIGURATION & STYLING
 # ==========================================
-st.set_page_config(
-    page_title="LOGITEK DISPATCH - Rate Confirmation AI",
-    page_icon="🚛",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+def init_page_styles():
+    if not STREAMLIT_AVAILABLE or not st:
+        return
+    st.set_page_config(
+        page_title="LOGITEK DISPATCH - Rate Confirmation AI",
+        page_icon="🚛",
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
 
-# Custom CSS for LOGITEK DISPATCH Liquid iOS 26 Theme and animated truck processing
-st.markdown("""
+    # Custom CSS for LOGITEK DISPATCH Liquid iOS 26 Theme and animated truck processing
+    st.markdown("""
 <style>
     /* Hide Sidebar Completely */
     section[data-testid="stSidebar"] {
@@ -286,6 +294,8 @@ st.markdown("""
 
 def render_truck_processing_animation(status_message: str):
     """Renders dynamic animated highway track with moving truck during processing."""
+    if not STREAMLIT_AVAILABLE or not st:
+        return
     html_code = f"""
     <div class="truck-highway-track">
         <div class="processing-status-banner">
@@ -307,10 +317,11 @@ def render_truck_processing_animation(status_message: str):
 # ==========================================
 # TEXT & PAGE IMAGE EXTRACTION HELPERS
 # ==========================================
-def extract_pdf_data(pdf_bytes: bytes, tesseract_cmd: str = None) -> tuple[str, list]:
+def extract_pdf_data(pdf_bytes: bytes, tesseract_cmd: str = None, render_images: bool = False) -> tuple[str, list]:
     """Extract raw text and page images from PDF file using pdfplumber and OCR for multi-page documents."""
     if not PDFPLUMBER_AVAILABLE:
-        st.error("`pdfplumber` library is not installed.")
+        if st:
+            st.error("`pdfplumber` library is not installed.")
         return "", []
     
     extracted_text = ""
@@ -335,15 +346,17 @@ def extract_pdf_data(pdf_bytes: bytes, tesseract_cmd: str = None) -> tuple[str, 
                         if row_filtered:
                             table_text += " | ".join(row_filtered) + "\n"
                 
-                # 3. Render page image for visual preview and multimodal LLM vision
+                # 3. Only render page image if explicitly requested OR text is minimal (<30 chars)
+                # Skips slow CPU bitmap rasterization (2-5s per page) for digital PDFs!
                 p_img = None
-                try:
-                    p_img = page.to_image(resolution=150).original
-                    if p_img.mode != 'RGB':
-                        p_img = p_img.convert('RGB')
-                    page_images.append(p_img)
-                except Exception:
-                    pass
+                if render_images or len(p_text.strip()) < 30:
+                    try:
+                        p_img = page.to_image(resolution=120).original
+                        if p_img.mode != 'RGB':
+                            p_img = p_img.convert('RGB')
+                        page_images.append(p_img)
+                    except Exception:
+                        pass
 
                 # 4. If text is minimal (e.g. scanned page), attempt OCR on the page image
                 if len(p_text.strip()) < 30 and p_img is not None and PYTESSERACT_AVAILABLE:
@@ -361,7 +374,8 @@ def extract_pdf_data(pdf_bytes: bytes, tesseract_cmd: str = None) -> tuple[str, 
                 extracted_text += combined_page + "\n"
 
     except Exception as e:
-        st.error(f"Error reading PDF: {str(e)}")
+        if st:
+            st.error(f"Error reading PDF: {str(e)}")
 
     return extracted_text.strip(), page_images
 
@@ -469,12 +483,13 @@ Return ONLY the JSON object.
 def parse_rc_with_gemini(raw_text: str, api_key: str, model_name: str = "gemini-2.5-flash", page_images: list = None) -> dict:
     """Parse raw text and/or page images using Google Gemini API with automatic model fallbacks."""
     if not GEMINI_AVAILABLE:
-        st.error("Google Gemini SDK is not installed.")
+        if st:
+            st.error("Google Gemini SDK is not installed.")
         return {}
     
-    # Candidate model list starting with requested model
+    # Candidate model list starting with fast models (gemini-2.0-flash / gemini-1.5-flash)
     fallback_models = [model_name]
-    for alt in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-pro", "gemini-1.5-pro"]:
+    for alt in ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-pro", "gemini-2.5-pro"]:
         if alt not in fallback_models:
             fallback_models.append(alt)
 
@@ -482,10 +497,10 @@ def parse_rc_with_gemini(raw_text: str, api_key: str, model_name: str = "gemini-
     if raw_text:
         contents.append(f"RAW EXTRACTED TEXT FROM ALL PAGES OF THE RATE CONFIRMATION:\n{raw_text}")
 
-    # Attach page images (up to 5 pages) to Gemini's prompt for multimodal vision extraction
-    if page_images:
+    # Attach page images ONLY if text is empty/minimal (< 50 chars) to prevent slow 15-20s vision calls
+    if (not raw_text or len(raw_text.strip()) < 50) and page_images:
         contents.append("VISUAL DOCUMENT PAGES FOR ALL PAGES OF THIS RATE CONFIRMATION:")
-        for idx, img in enumerate(page_images[:5]):
+        for idx, img in enumerate(page_images[:3]):
             contents.append(f"--- PAGE {idx + 1} IMAGE ---")
             contents.append(img)
 
@@ -747,6 +762,7 @@ RATE: {rate_str}$
 # MAIN APPLICATION INTERFACE
 # ==========================================
 def main():
+    init_page_styles()
     # LOGITEK DISPATCH Liquid Hero Intro Banner
     st.markdown("""
     <div class="logitek-hero-banner">
@@ -758,23 +774,18 @@ def main():
 
     # Set Default AI & Engine Configuration
     provider = "Google Gemini"
-    # API key: read from Streamlit secrets (cloud), environment variable, or encoded fallback
-    api_key = ""
+    model_name = "gemini-2.0-flash"
+    tesseract_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe" if os.name == 'nt' else "/usr/bin/tesseract"
+
+    # Built-in configured API Key (Base64 encoded fallback)
+    import base64
+    fallback_key = base64.b64decode("QVEuQWI4Uk42THRZNm8tSm5fMGtlVlpsLWFoQW5FLWZGRnZSRVJ3LUQwRHN0VjN3VGR5RUE=").decode("utf-8")
+    api_key = os.environ.get("GEMINI_API_KEY", fallback_key).strip()
     try:
-        if "GEMINI_API_KEY" in st.secrets:
+        if st and hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
             api_key = str(st.secrets["GEMINI_API_KEY"]).strip()
     except Exception:
         pass
-
-    if not api_key:
-        api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-
-    if not api_key:
-        import base64
-        api_key = base64.b64decode("QVEuQWI4Uk42THhEM3lJdmlIN2txaDg1OHlWZmI0Wjc5bW1ycXRTOVRaOGxqRndKeHRpa3c=").decode("utf-8")
-
-    model_name = "gemini-2.5-flash"
-    tesseract_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe" if os.name == 'nt' else "/usr/bin/tesseract"
 
     # ------------------------------------------
     # MAIN CONTENT: FILE UPLOAD & SAMPLE LOAD
@@ -789,7 +800,7 @@ def main():
     with col_samp:
         st.write("")
         st.write("")
-        load_sample = st.button("🧪 Test with Sample RC", width="stretch")
+        load_sample = st.button("🧪 Test with Sample RC", use_container_width=True)
         if load_sample:
             st.session_state["use_sample"] = True
 
@@ -840,7 +851,8 @@ def main():
             is_pdf = file_name.lower().endswith(".pdf") or "pdf" in file_type
 
             if is_pdf:
-                raw_text, page_images = extract_pdf_data(file_bytes, tesseract_cmd=tesseract_path)
+                # render_images=False prevents slow 150 DPI CPU bitmap rendering
+                raw_text, page_images = extract_pdf_data(file_bytes, tesseract_cmd=tesseract_path, render_images=False)
             else:
                 raw_text = extract_text_from_image(file_bytes, tesseract_cmd=tesseract_path)
                 try:

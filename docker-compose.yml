@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  logitek-dispatch:
+    build: .
+    container_name: logitek-dispatch-web
+    restart: always
+    ports:
+      - "80:80"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
